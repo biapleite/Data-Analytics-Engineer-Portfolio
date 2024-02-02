@@ -1,0 +1,160 @@
+This Lab uses the Snowflake command line client, SnowSQL, with the purpose of:
+- Create Snowflake objects — Database and a table for storing data.
+- Load data — CSV data files to load into the table.
+- Write and execute sample queries — Explore sample queries.
+
+
+1. PRE-REQUISITES
+
+> Install SnowSQL: https://docs.snowflake.com/user-guide/snowsql-install-config
+> Download .csv files: https://docs.snowflake.com/_downloads/34f4a66f56d00340f8f7a92acaccd977/getting-started.zip
+
+
+
+
+
+2. LOG IN TO SNOWSQL
+	- Open a command line window.
+	- Start SnowSQL: $ snowsql -a <account_identifier> -u <user_name>
+
+Where:
+
+<account_identifier> is the unique identifier for your Snowflake account.
+The preferred format of the account identifier is as follows:
+
+organization_name-account_name
+Names of your Snowflake organization and account. For more information, see Format 1 (Preferred): Account Name in Your Organization.
+
+<user_name> is the login name for your Snowflake user.
+
+
+
+
+
+3. CREATE SNOWFLAKE OBJECTS
+
+
+//Creating a schema
+CREATE OR REPLACE DATABASE sf_tuts;
+
+
+//Selecting created database to be used on context
+USE DATABASE sf_tuts;
+USE SCHEMA public;
+
+
+//Get current database and schema names
+SELECT current_database(), current_schema();
+
+
+//Creating a table
+CREATE OR REPLACE TABLE emp_basic(
+    first_name STRING,
+    last_name STRING,
+    email STRING,
+    streetaddress STRING,
+    city STRING,
+    start_date DATE
+);
+
+
+//Creating a virtual warehouse
+CREATE OR REPLACE WAREHOUSE sf_tuts_wh WITH
+WAREHOUSE_SIZE='X-SMALL'
+AUTO_SUSPEND= 180
+AUTO_RESUME = TRUE
+INITIALLY_SUSPENDED=TRUE;
+--The AUTO_RESUME setting causes a warehouse to automatically start when SQL statements that require compute resources are executed, since sf_tuts_wh warehouse is initially suspended.
+
+
+//Checking current warehouse
+SELECT current_warehouse();
+
+
+//Use warehouse
+USE WAREHOUSE sf_tuts_wh;
+
+
+
+
+
+3. STAGE DATA FILES
+
+
+//Staging sample data files with PUT file command --this command only works with SnowSQL CLI
+PUT file://C:\temp\employees0*.csv @sf_tuts.public.%emp_basic;
+
+
+//List Command
+LIST @sf_tuts.public.%emp_basic;
+
+
+
+
+
+4. COPY DATA INTO TARGET TABLES 
+
+
+//Copy Into Command
+COPY INTO emp_basic
+    FROM @%emp_basic
+    FILE_FORMAT = (type = csv field_optionally_enclosed_by='"')
+    PATTERN = '.*employees0[1-5].csv.gz'
+    ON_ERROR = 'skip_file';
+
+
+Where:
+
+- The FROM clause specifies the location containing the data files (the internal stage for the table).
+- The FILE_FORMAT clause specifies the file type as CSV, and specifies the double-quote character (") as the character used to enclose strings. Snowflake supports diverse file types and options. These are described in CREATE FILE FORMAT.
+- The PATTERN clause specifies that the command should load data from the filenames matching this regular expression (.*employees0[1-5].csv.gz).
+- The ON_ERROR clause specifies what to do when the COPY command encounters errors in the files. By default, the command stops loading data when the first error is encountered. This example skips any file containing an error and moves on to loading the next file. (None of the files in this tutorial contain errors; this is included for illustration purposes.)
+
+
+
+
+
+5. QUERY LOADED DATA
+
+
+//Retrieve the data
+SELECT * FROM emp_basic;
+
+
+//Insert rows
+INSERT INTO emp_basic VALUES
+   ('Clementine','Adamou','cadamou@sf_tuts.com','10510 Sachs Road','Klenak','2017-9-22') ,
+   ('Marlowe','De Anesy','madamouc@sf_tuts.co.uk','36768 Northfield Plaza','Fangshan','2017-1-26');
+
+
+//Query rows based on email address
+SELECT email
+FROM emp_basic
+WHERE email LIKE '%.uk';
+
+
+//Query rows based on start date
+SELECT first_name, last_name,START_DATE, DATEADD('day',90,start_date) as DATE_ADD 
+FROM emp_basic 
+WHERE start_date <= '2017-01-01';
+
+
+//Query name and start date
+select first_name, start_date FROM emp_basic;
+
+
+
+
+
+6. SUMMARY, CLEAN UP, AND ADDITIONAL RESOURCES
+
+
+//Clean up objects
+DROP DATABASE IF EXISTS sf_tuts;
+DROP WAREHOUSE IF EXISTS sf_tuts_wh;
+
+
+
+
+
+Source: https://docs.snowflake.com/user-guide/tutorials/snowflake-in-20minutes?utm_campaign=Talent%20%7C%20Paid%20Media&utm_medium=email&_hsmi=2&_hsenc=p2ANqtz-_c037JZIl0_B0-NpgFbtGg1iuN5rhFzPDOxAKpENfjiYlgDYSyUZPf3lkIFzjgKWTVRNCUYZourTIw96MueSY0bDGYN7jRFQPuSLSrrh8-U2hANt0&utm_content=2&utm_source=hs_email
