@@ -16,6 +16,6 @@ With my skills, I thrive to drive successful outcomes and contribute meaningfull
 
 ## Certificates
 
-- [Talend Data Integration Certified Developer] (https://www.credly.com/earner/earned/badge/c2af047e-e08e-424c-a3d3-7ed1c1955db8)
-- [Microsoft Certified: Azure Fundamentals] (https://www.credly.com/earner/earned/badge/9de93281-ad90-4658-aa14-bbbb7a003c64)
-- [SnowPro Core Certification] (https://www.credly.com/earner/earned/badge/847bf1a6-1f51-41a3-b6a3-0ef588eea725)
+- [Talend Data Integration Certified Developer](https://www.credly.com/earner/earned/badge/c2af047e-e08e-424c-a3d3-7ed1c1955db8)
+- [Microsoft Certified: Azure Fundamentals](https://www.credly.com/earner/earned/badge/9de93281-ad90-4658-aa14-bbbb7a003c64)
+- [SnowPro Core Certification](https://www.credly.com/earner/earned/badge/847bf1a6-1f51-41a3-b6a3-0ef588eea725)
