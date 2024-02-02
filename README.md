@@ -19,7 +19,7 @@ With my skills, I thrive to drive successful outcomes and contribute meaningfull
 
 ### -   SQL
 
-### 1. SCD Type 2
+#### 1. SCD Type 2
 
 **Goal:**  The purpose of this script is to apply a Slowly Changing Dimension Type 2 in a ~300 million row using SQL in a Azure Synapse Analytics Table.
 
@@ -38,7 +38,7 @@ This script is part of a project which consists in migrating the data warehouse 
 
 
 
-### 2. Code Header Template
+#### 2. Code Header Template
 
 **Goal:**  The purpose of this script is to serve as a template to keep track of SQL scripts changes overtime.
 
