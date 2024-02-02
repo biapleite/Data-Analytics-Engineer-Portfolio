@@ -1,0 +1,365 @@
+1. PREPARE TO LOAD DATA
+
+// Create a Database CITIBAKE
+	- Using sysadmin role (select your name at the top left, Switch Role > SYSADMIN)
+	- Create a database CITIBIKE to use for loading the structured data.
+	- Navigate to the Databases tab > Click Create > name the database CITIBIKE > then click CREATE.
+
+
+// Create table TRIPS
+CREATE OR REPLACE TABLE TRIPS
+(
+    tripduration integer,
+    starttime timestamp,
+    stoptime timestamp,
+    start_station_id integer,
+    start_station_name string,
+    start_station_latitude float,
+    start_station_longitude float,
+    end_station_id integer,
+    end_station_name string,
+    end_station_latitude float,
+    end_station_longitude float,
+    bikeid integer,
+    membership_type string,
+    usertype string,
+    birth_year integer,
+    gender integer
+);
+
+
+//create external stage using UI
+	- Databases tab > click the CITIBIKE database and PUBLIC schema > Click the Create button, then Stage > Amazon S3.
+	- In the "Create Securable Object" dialog that opens, replace the following values in the SQL statement:
+
+: citibike_trips
+: s3://snowflake-workshop-lab/citibike-trips-csv/
+
+
+//list contents of external stage (list of files in the stage)
+LIST @citibike_trips;
+
+
+//Create a file format
+create or replace file format csv type='csv'
+  compression = 'auto' field_delimiter = ',' record_delimiter = '\n'
+  skip_header = 0 field_optionally_enclosed_by = '\042' trim_space = false
+  error_on_column_count_mismatch = false escape = 'none' escape_unenclosed_field = '\134'
+  date_format = 'auto' timestamp_format = 'auto' null_if = ('') comment = 'file format for ingesting data for zero to snowflake';
+
+
+//Verify file format has been created
+show file formats in database citibike;
+
+
+//Resize and Use a Warehouse for Data Loading
+	- Use the existing warehouse COMPUTE_WH
+	- Resize from X-Small to Small
+
+
+
+
+2. LOAD DATA
+
+
+//Copy into command
+COPY INTO TRIPS FROM @citibike_trips file_format=csv PATTERN = '.*csv.*';
+--35s with small size
+
+
+//truncate table trips
+TRUNCATE TABLE TRIPS;
+
+
+//Verify table is clear
+SELECT * FROM TRIPS
+LIMIT 10;
+
+
+//Change warehouse size from small to large
+ALTER WAREHOUSE COMPUTE_WH SET WAREHOUSE_SIZE='LARGE';
+
+
+SHOW WAREHOUSES;
+
+
+//Execute copy into again now with a large warehouse
+COPY INTO TRIPS FROM @citibike_trips file_format=csv PATTERN ='.*csv.*';
+--13s with large size
+
+
+Results: Time decreased by approximately 63%
+
+
+
+
+
+3. CREATE NEW WAREHOUSE FOR DATA ANALYTICS
+
+
+//Create Warehouse using UI
+	- Admin > Warehouses tab, click + Warehouse
+	- Name: ANALYTICS_WH 
+	- Size: Large
+
+
+//Use the newly warehouse created and database and schema from above operations
+USE ROLE SYSADMIN;
+USE WAREHOUSE ANALYTICS_WH;
+USE DATABASE CITIBIKE;
+USE SCHEMA PUBLIC;
+
+
+//Select sample data from trips table
+SELECT * FROM TRIPS LIMIT 20;
+
+
+//run analytics query - hourly statistics on Citi Bike usage
+//For each hour, it shows the number of trips, average trip duration, and average trip distance.
+select date_trunc('hour', starttime) as "date",
+count(*) as "num trips",
+avg(tripduration)/60 as "avg duration (mins)",
+avg(haversine(start_station_latitude, start_station_longitude, end_station_latitude, end_station_longitude)) as "avg distance (km)"
+from trips
+group by 1 order by 1;
+
+
+//Using result cache (Snowflake has a result cache that holds the results of every query executed in the past 24 hours.)
+select date_trunc('hour', starttime) as "date",
+count(*) as "num trips",
+avg(tripduration)/60 as "avg duration (mins)",
+avg(haversine(start_station_latitude, start_station_longitude, end_station_latitude, end_station_longitude)) as "avg distance (km)"
+from trips
+group by 1 order by 1;
+
+
+>>In the Query Details pane on the right, note that the second query runs significantly faster because the results have been cached.
+
+
+//which months are busiest
+select
+monthname(starttime) as "month",
+count(*) as "num trips"
+from trips
+group by 1 order by 2 desc;
+
+
+//Clone a table with zero-copy cloning (Snowflake takes a snapshot of data present in the source object and makes it available to the cloned object)
+//The following command will create a development (dev) table clone of the trips table
+CREATE TABLE trips_dev CLONE trips;
+
+
+
+
+
+4. SEMI-STRUCTURED DATA, VIEWS & JOINS
+
+
+//Create new database
+CREATE DATABASE WEATHER;
+
+
+//Use commands to set the worksheet context appropriately
+USE ROLE SYSADMIN;
+USE WAREHOUSE COMPUTE_WH;
+USE DATABASE WEATHER;
+USE SCHEMA PUBLIC;
+
+
+//Create table to load JSON data
+CREATE TABLE json_weather_data (v variant);
+
+
+//create external stage
+CREATE STAGE nyc_weather
+url='s3://snowflake-workshop-lab/zero-weather-nyc';
+
+
+//list external stage (list of .gz files from S3)
+list @nyc_weather;
+
+
+//load semi-structured data
+COPY INTO json_weather_Data
+from @nyc_weather
+    file_format = (type = json strip_outer_array = true);
+--verify each file has status LOADED
+
+
+//Checking a sample of data loaded
+SELECT * FROM json_weather_data limit 10;
+
+
+// create a view that will put structure onto the semi-structured data (create a columnar view of the semi-structured JSON weather data so it is easier for analysts to understand and query)
+create or replace view json_weather_data_view as
+select
+    v:obsTime::timestamp as observation_time,
+    v:station::string as station_id,
+    v:name::string as city_name,
+    v:country::string as country,
+    v:latitude::float as city_lat,
+    v:longitude::float as city_lon,
+    v:weatherCondition::string as weather_conditions,
+    v:coco::int as weather_conditions_code,
+    v:temp::float as temp,
+    v:prcp::float as rain,
+    v:tsun::float as tsun,
+    v:wdir::float as wind_dir,
+    v:wspd::float as wind_speed,
+    v:dwpt::float as dew_point,
+    v:rhum::float as relative_humidity,
+    v:pres::float as pressure
+from
+    json_weather_data
+where
+    station_id = '72502';
+--The 72502 value for station_id corresponds to Newark Airport, the closest station that has weather conditions for the whole period.
+
+
+//Verify a sample of the view
+select * from json_weather_data_view
+where date_trunc('month',observation_time) = '2018-01-01'
+limit 20;
+--Note the results look just like a regular structured data source.
+
+
+//Join 'json_weather_data' with 'trips' table to understand how weather impacts the number of rides
+select weather_conditions as conditions
+,count(*) as num_trips
+from citibike.public.trips
+left outer join json_weather_data_view
+on date_trunc('hour', observation_time) = date_trunc('hour', starttime)
+where conditions is not null
+group by 1 
+order by 2 desc;
+
+
+
+
+5. USING TIME TRAVEL
+
+
+//Drop table
+DROP TABLE json_weather_data;
+
+
+//Run a query on the table - there's an error because table has been dropped
+SELECT * FROM json_weather_data;
+
+
+//Restore table
+UNDROP TABLE json_weather_data;
+
+
+//Verify table is undropped
+SELECT * FROM json_weather_data limit 10;
+
+
+//Set the following contexts
+use role sysadmin;
+use warehouse compute_wh;
+use database citibike;
+use schema public;
+
+
+//Update the field start_station_name in whole table
+update trips 
+set start_station_name = 'oops';
+
+
+//Run a query that returns the top 20 stations by number of rides and note that the station names result contains only one row
+select
+start_station_name as "station",
+count(*) as "rides"
+from trips
+group by 1
+order by 2 desc
+limit 20;
+
+
+//Find last update command and store it in a variable named $QUERY_ID.
+set query_id =
+(select query_id from table(information_schema.query_history_by_session (result_limit=>5))
+where query_text like 'update%' order by start_time desc limit 1);
+
+
+//Use time trable to recreate the table with corrent station names
+create or replace table trips as
+(select * from trips before (statement => $query_id));
+
+
+//Verify that the station names have been restored
+select
+start_station_name as "station",
+count(*) as "rides"
+from trips
+group by 1
+order by 2 desc
+limit 20;
+
+
+
+
+6. ROLES
+
+
+//switch to the ACCOUNTADMIN role to create a new role
+use role accountadmin;
+
+
+//Create a new role and assign it to myself
+create role junior_dba;
+grant role junior_dba to user biapleite;
+
+
+//change worksheet context to the new JUNIOR_DBA role
+use role junior_dba;
+
+
+//grant access to compute_wh to junior_dba role
+use role accountadmin;
+grant usage on warehouse compute_wh to role junior_dba;
+
+
+//Switch back to the JUNIOR_DBA role to be able to use COMPUTE_WH now
+use role junior_dba;
+use warehouse compute_wh;
+--no databases yet (JUNIOR_DBA role does not have privileges to access them)
+
+
+//switch back to ACCOUNT_ADMIN role and grant JUNIOR_DBA access to databases 
+use role accountadmin;
+grant usage on database citibike to role junior_dba;
+grant usage on database weather to role junior_dba;
+
+
+//Switch to the JUNIOR_DBA role
+use role junior_dba;
+--Note that the CITIBIKE and WEATHER databases now appear in the database object browser panel on the left. 
+
+
+
+
+7. RESETTING SNOWFLAKE ENVIRONMENT
+
+
+//Resetting your Snowflake Environment
+use role accountadmin;
+
+//Run the following SQL commands to drop all the objects we created in the lab
+drop share if exists zero_to_snowflake_shared_data;
+-- If necessary, replace "zero_to_snowflake-shared_data" with the name you used for the share
+
+drop database if exists citibike;
+
+drop database if exists weather;
+
+drop warehouse if exists analytics_wh;
+
+drop role if exists junior_dba;
+
+
+
+
+
+Source: https://quickstarts.snowflake.com/guide/getting_started_with_snowflake/index.html?utm_campaign=Talent-|-Paid-Media&utm_source=hs_email&utm_medium=email&utm_content=2#0
