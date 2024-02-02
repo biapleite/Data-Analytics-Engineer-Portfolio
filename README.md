@@ -33,11 +33,11 @@ This script is part of a project which consists in migrating the data warehouse 
 **Skills:** DDL (Create, Drop), Join (Inner, Left), Update, CTE (Common Table Expression), Insert, Funtion (checksum, getdate).
 
 **Results:** Achieved the objective of keeping track of changes on this table by using  
-
-
-
-
-
+\
+\
+\
+\
+\
 #### 2. Code Header Template
 
 **Goal:**  The purpose of this script is to serve as a template to keep track of SQL scripts changes overtime.
