@@ -1,3 +1,21 @@
+The purpose of this Lab is to:
+1. PREPARE SNOWFLAKE ENVIRONMENT TO LOAD DATA WITH COPY INTO
+2. LOAD DATA (COPY INTO)
+3. CREATE NEW WAREHOUSE FOR DATA ANALYTICS
+4. LOAD SEMI-STRUCTURED DATA, VIEWS & JOINS
+5. USING TIME TRAVEL
+6. MANAGING ROLES AND PRIVILEGES
+
+
+
+
+
+==============================================================================
+
+
+
+
+
 1. PREPARE TO LOAD DATA
 
 // Create a Database CITIBAKE
