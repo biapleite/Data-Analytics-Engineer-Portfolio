@@ -17,7 +17,7 @@ With my skills, I thrive to drive successful outcomes and contribute meaningfull
 
 ## Projects
 
-### <font size=”10”> > SQL
+### <font size=”20”> > SQL
 
 ### 1. SCD Type 2
 
