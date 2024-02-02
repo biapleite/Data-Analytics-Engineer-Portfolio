@@ -36,8 +36,7 @@ This script is part of a project which consists in migrating the data warehouse 
 \
 \
 \
-\
-\
+
 #### 2. Code Header Template
 
 **Goal:**  The purpose of this script is to serve as a template to keep track of SQL scripts changes overtime.
