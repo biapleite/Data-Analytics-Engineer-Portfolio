@@ -1,4 +1,4 @@
-# Data Analytics Engineer - Porfolio
+# Data Analytics Engineer - Portfolio
 
 ## About
 
