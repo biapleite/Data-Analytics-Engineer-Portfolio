@@ -18,6 +18,7 @@ With my skills, I thrive to drive successful outcomes and contribute meaningfull
 ## Projects
 
 ### -   SQL
+<br/><br/>
 
 #### 1. SCD Type 2
 
@@ -33,7 +34,7 @@ This script is part of a project which consists in migrating the data warehouse 
 **Skills:** DDL (Create, Drop), Join (Inner, Left), Update, CTE (Common Table Expression), Insert, Funtion (checksum, getdate).
 
 **Results:** Achieved the objective of keeping track of changes on this table by using  
-<br/><br/><br/>
+<br/><br/>
 
 #### 2. Code Header Template
 
