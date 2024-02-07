@@ -66,7 +66,7 @@ This script is part of a project which consists in migrating the data warehouse 
 ## Education
 
 - University of Taubate - Bachelor's degree, Industrial Engineer, 2016 - 2021
-
+<br/>
 ## Certificates
 
 - [Talend Data Integration Certified Developer](https://www.credly.com/badges/c2af047e-e08e-424c-a3d3-7ed1c1955db8)
