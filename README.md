@@ -61,6 +61,8 @@ This script is part of a project which consists in migrating the data warehouse 
 
 **Technologies:** Snowflake, SnowSQL.
 
+<br/>
+
 ## Education
 
 - University of Taubate - Bachelor's degree, Industrial Engineer, 2016 - 2021
